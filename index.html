@@ -66,6 +66,7 @@ nav{display:none}
 @media(min-width:900px){.hero-inner{grid-template-columns:1.15fr .85fr;align-items:center}}
 .hero h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.06;font-weight:700;color:#fff}
 .hero h1 span{color:var(--teal)}
+.hero p.hero-credit{color:var(--text);font-size:14.5px;margin-top:12px}
 .hero p{color:var(--muted);font-size:16px;line-height:1.6;margin-top:18px;max-width:46ch}
 .cta-row{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:14px;padding:13px 22px;border-radius:11px;text-decoration:none;border:1px solid transparent;transition:transform .12s ease}
@@ -177,12 +178,13 @@ footer a{color:#6b7280}
     <div>
       <h1>Bangun kerajaan distribusi <span>BBM &amp; LPG</span>-mu dari Tuban sampai ke pelosok Nusantara.</h1>
       <p>Simulasi bisnis logistik energi: kelola kilang, armada truk &amp; kapal, mitra SPBU, sampai bersaing di papan peringkat — semuanya berjalan real-time di peta 34 provinsi.</p>
+      <p class="hero-credit">Game ini terinspirasi dari <b>Pertamina Patra Niaga</b> (game independen, tidak berafiliasi).</p>
       <div class="cta-row">
         <a href="#detail" id="cta-hero" class="btn locked" aria-disabled="true"><i class="fa-solid fa-lock"></i> Main Sekarang</a>
         <a href="#cara-main" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> Cara Main</a>
       </div>
       <div class="read-hint" id="hint-hero"><i class="fa-solid fa-circle-exclamation"></i> Baca dulu penjelasan lengkap di bawah untuk membuka tombol ini.</div>
-      <div class="hero-note">Belum ada akun demo — daftar akun baru untuk mulai &middot; progres tersimpan otomatis di cloud &middot; v1.1.0</div>
+      <div class="hero-note">Belum ada akun demo — daftar akun baru untuk mulai &middot; progres tersimpan otomatis di cloud &middot; v1.5.0</div>
     </div>
     <div class="panel">
       <div class="panel-top"><i class="fa-solid fa-gauge-high"></i> Kondisi Awal Setiap Akun Baru</div>
@@ -265,9 +267,8 @@ footer a{color:#6b7280}
   <div class="wrap">
     <div class="section-head">
       <h2>Penjelasan lengkap sebelum mulai</h2>
-      <p>Sembilan hal ini menentukan strategi awalmu. Buka tiap bagian, baca sampai selesai — tombol "Main Sekarang" otomatis aktif setelah kamu sampai ke bagian paling bawah.</p>
+      <p>Sembilan hal ini menentukan strategi awalmu. Buka tiap bagian dan baca sampai selesai sebelum mulai bermain.</p>
     </div>
-    <div class="read-progress"><i id="read-bar"></i></div>
 
     <div class="detail-list">
       <details class="detail-item" open>
@@ -319,7 +320,6 @@ footer a{color:#6b7280}
       <details class="detail-item">
         <summary><i class="di-ico fa-solid fa-trophy"></i> Top Up, Centang Biru &amp; Peringkat <i class="di-chev fa-solid fa-chevron-down"></i></summary>
         <div class="detail-body">Top up saldo dilakukan manual: transfer via QRIS, kirim bukti, lalu diverifikasi tim sebelum saldo dan badge <b>"centang biru"</b> berbatas waktu dikirim ke akunmu. Papan peringkat dihitung dari cash dan tersinkron real-time antar pemain, sementara seluruh progres tersimpan otomatis di cloud lewat akun terdaftar.</div>
-        <div id="read-end"></div>
       </details>
     </div>
   </div>
@@ -339,57 +339,67 @@ footer a{color:#6b7280}
 </section>
 
 <script>
+/* ==========================================================================
+   PENGATURAN TOMBOL "MAIN SEKARANG"  (EDIT DI SINI SAJA)
+   --------------------------------------------------------------------------
+   Ganti nilai 'lock' atau 'open' secara manual. Tidak ada yang otomatis.
+
+   'lock' = tombol terkunci (abu-abu, tidak bisa diklik)
+   'open' = tombol terbuka (hijau, bisa diklik ke game)
+   ========================================================================== */
+
+// Tombol "Main Sekarang" di bagian ATAS (hero)
+var TOMBOL_ATAS  = 'lock';     // <-- ganti: 'lock' atau 'open'
+
+// Tombol "Main Sekarang" di bagian BAWAH (Siap membangun jaringan...)
+var TOMBOL_BAWAH = 'lock';     // <-- ganti: 'lock' atau 'open'
+
+// Link game (dipakai saat tombol 'open')
+var LINK_GAME = 'https://fastxgaming.github.io/studio-game/';
+
+// Tulisan kecil di bawah tombol
+var TEKS_LOCK_ATAS  = 'Belum dibuka — masih tahap testing.';
+var TEKS_LOCK_BAWAH = 'Belum dibuka — masih tahap testing.';
+var TEKS_OPEN       = 'Tombol aktif — selamat bermain!';
+/* ================== BATAS PENGATURAN — JANGAN EDIT DI BAWAH ================== */
+
 (function(){
-  var bar = document.getElementById('read-bar');
-  var endEl = document.getElementById('read-end');
-  var detailSection = document.getElementById('detail');
-  var unlocked = false;
+  function terapkan(idTombol, idHint, status, teksLock){
+    var btn  = document.getElementById(idTombol);
+    var hint = document.getElementById(idHint);
+    var buka = (String(status).toLowerCase() === 'open');
 
-  function updateProgress(){
-    if(!detailSection || unlocked) return;
-    var rect = detailSection.getBoundingClientRect();
-    var total = rect.height - window.innerHeight * 0.4;
-    var passed = (window.innerHeight * 0.6) - rect.top;
-    var pct = total > 0 ? Math.max(0, Math.min(100, (passed/total)*100)) : 0;
-    if(bar) bar.style.width = pct + '%';
-  }
-
-  function unlock(){
-    if(unlocked) return;
-    unlocked = true;
-    if(bar) bar.style.width = '100%';
-    [['cta-hero','hint-hero'],['cta-final','hint-final']].forEach(function(pair){
-      var btn = document.getElementById(pair[0]);
-      var hint = document.getElementById(pair[1]);
-      if(btn){
+    if(btn){
+      if(buka){
         btn.classList.remove('locked');
         btn.classList.add('btn-primary');
         btn.removeAttribute('aria-disabled');
         btn.innerHTML = '<i class="fa-solid fa-play"></i> Main Sekarang';
-        btn.href = 'https://fastxgaming.github.io/studio-game/';
+        btn.href = LINK_GAME;
         btn.target = '_blank';
         btn.rel = 'noopener';
+      }else{
+        btn.classList.remove('btn-primary');
+        btn.classList.add('locked');
+        btn.setAttribute('aria-disabled', 'true');
+        btn.innerHTML = '<i class="fa-solid fa-lock"></i> Main Sekarang';
+        btn.removeAttribute('target');
+        btn.href = '#detail';
       }
-      if(hint){
+    }
+    if(hint){
+      if(buka){
         hint.classList.add('ok');
-        hint.innerHTML = '<i class="fa-solid fa-circle-check"></i> Sudah dibaca semua — tombol aktif!';
+        hint.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + TEKS_OPEN;
+      }else{
+        hint.classList.remove('ok');
+        hint.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + teksLock;
       }
-    });
+    }
   }
 
-  try{
-    var io = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){ if(e.isIntersecting) unlock(); });
-    }, { threshold: 0 });
-    if(endEl) io.observe(endEl);
-  }catch(e){
-    window.addEventListener('scroll', function(){
-      if(endEl && endEl.getBoundingClientRect().top < window.innerHeight) unlock();
-    });
-  }
-
-  window.addEventListener('scroll', updateProgress, { passive:true });
-  updateProgress();
+  terapkan('cta-hero',  'hint-hero',  TOMBOL_ATAS,  TEKS_LOCK_ATAS);
+  terapkan('cta-final', 'hint-final', TOMBOL_BAWAH, TEKS_LOCK_BAWAH);
 })();
 </script>
 
